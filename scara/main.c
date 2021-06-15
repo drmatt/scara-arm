@@ -4,6 +4,8 @@
 
 static char block[MAX_BLOCK_LENGTH];
 
+#define TICKS_PER_MICROSECOND (F_CPU/1000000)
+
 void printString(const char* s) {
     while(*s) {
         write(*s++);
@@ -11,10 +13,42 @@ void printString(const char* s) {
     write('\r\n');
 }
 
+ISR(TIMER1_COMPA_vect)
+{  
+  // flip digial pin
+    // write('.');
+}
+
+void initTimer() {
+
+  // initialise timer 
+  // set frequency
+  // use oscillioscope to check frequency
+  // what algorithm should I use?
+
+  TCCR1B &= ~(1<<WGM13); // waveform generation = 0100 = CTC
+  TCCR1B |=  (1<<WGM12);
+  TCCR1A &= ~((1<<WGM11) | (1<<WGM10)); 
+  TCCR1A &= ~((1<<COM1A1) | (1<<COM1A0) | (1<<COM1B1) | (1<<COM1B0));
+	
+  // Enable Timer1 interrupt
+	TIMSK1 |= (1 << OCIE1A);
+
+	TCNT1 = 0;
+	
+  uint32_t cycles = ceil( (TICKS_PER_MICROSECOND*1000000*60)*inv_rate ); // (cycles/step)    
+
+  // cycles per tick
+	OCR1A = 15625;
+}
+
 int main()
 {
-    sei();
 	  initSerial();
+    initTimer();
+
+    // Enable global interrupts
+    sei();
 
     uint8_t blockIndex = 0;
     bool isComment = false;
